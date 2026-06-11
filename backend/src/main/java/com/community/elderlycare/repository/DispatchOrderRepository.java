@@ -75,4 +75,20 @@ public class DispatchOrderRepository {
     public long countPending() {
         return jdbc.queryForObject("SELECT COUNT(*) FROM dispatch_order WHERE status='待派单'", Long.class);
     }
+
+    public List<DispatchOrder> findByVolunteerId(Long volunteerId) {
+        return jdbc.query(
+            "SELECT d.*, e.name as elder_name, v.name as volunteer_name " +
+            "FROM dispatch_order d LEFT JOIN elder e ON d.elder_id=e.id LEFT JOIN volunteer v ON d.volunteer_id=v.id " +
+            "WHERE d.volunteer_id=? ORDER BY d.id DESC",
+            (rs, i) -> { DispatchOrder d = mapper.mapRow(rs, i); d.setElderName(rs.getString("elder_name")); d.setVolunteerName(rs.getString("volunteer_name")); return d; }, volunteerId);
+    }
+
+    public List<DispatchOrder> findByVolunteerIdAndStatus(Long volunteerId, String status) {
+        return jdbc.query(
+            "SELECT d.*, e.name as elder_name, v.name as volunteer_name " +
+            "FROM dispatch_order d LEFT JOIN elder e ON d.elder_id=e.id LEFT JOIN volunteer v ON d.volunteer_id=v.id " +
+            "WHERE d.volunteer_id=? AND d.status=? ORDER BY d.id DESC",
+            (rs, i) -> { DispatchOrder d = mapper.mapRow(rs, i); d.setElderName(rs.getString("elder_name")); d.setVolunteerName(rs.getString("volunteer_name")); return d; }, volunteerId, status);
+    }
 }

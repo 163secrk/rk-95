@@ -18,7 +18,12 @@ public class DispatchOrderController {
     }
 
     @GetMapping
-    public List<DispatchOrder> list() { return repo.findAll(); }
+    public List<DispatchOrder> list(@RequestParam(required = false) Long volunteerId,
+                                    @RequestParam(required = false) String status) {
+        if (volunteerId != null && status != null) return repo.findByVolunteerIdAndStatus(volunteerId, status);
+        if (volunteerId != null) return repo.findByVolunteerId(volunteerId);
+        return repo.findAll();
+    }
 
     @GetMapping("/{id}")
     public DispatchOrder get(@PathVariable Long id) { return repo.findById(id); }

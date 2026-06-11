@@ -57,3 +57,14 @@ CREATE TABLE IF NOT EXISTS dispatch_order (
     FOREIGN KEY (elder_id) REFERENCES elder(id),
     FOREIGN KEY (volunteer_id) REFERENCES volunteer(id)
 );
+
+CREATE TABLE IF NOT EXISTS user (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    role TEXT NOT NULL,
+    volunteer_id INTEGER,
+    name TEXT,
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    FOREIGN KEY (volunteer_id) REFERENCES volunteer(id)
+);

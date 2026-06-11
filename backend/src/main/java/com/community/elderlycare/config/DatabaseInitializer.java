@@ -85,5 +85,22 @@ public class DatabaseInitializer {
             "FOREIGN KEY (elder_id) REFERENCES elder(id)," +
             "FOREIGN KEY (volunteer_id) REFERENCES volunteer(id)" +
             ")");
+
+        jdbc.execute("CREATE TABLE IF NOT EXISTS user (" +
+            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "username TEXT NOT NULL UNIQUE," +
+            "password TEXT NOT NULL," +
+            "role TEXT NOT NULL," +
+            "volunteer_id INTEGER," +
+            "name TEXT," +
+            "created_at TEXT DEFAULT (datetime('now','localtime'))," +
+            "FOREIGN KEY (volunteer_id) REFERENCES volunteer(id)" +
+            ")");
+
+        Integer adminCount = jdbc.queryForObject("SELECT COUNT(*) FROM user WHERE username='admin'", Integer.class);
+        if (adminCount == 0) {
+            jdbc.update("INSERT INTO user(username, password, role, name) VALUES(?, ?, ?, ?)",
+                "admin", "admin123", "admin", "系统管理员");
+        }
     }
 }

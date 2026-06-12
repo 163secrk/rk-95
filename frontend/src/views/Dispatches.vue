@@ -11,9 +11,21 @@
         <template #status="{ row }">
           <t-tag :theme="dispatchTheme(row.status)">{{ row.status }}</t-tag>
         </template>
+        <template #duration="{ row }">
+          <span v-if="row.actualDuration" class="duration-text">{{ formatDuration(row.actualDuration) }}</span>
+          <span v-else class="text-gray">-</span>
+        </template>
+        <template #rating="{ row }">
+          <template v-if="row.rating">
+            <t-rate v-model="row.rating" :allow-half="false" readonly size="small" />
+          </template>
+          <span v-else class="text-gray">未评价</span>
+        </template>
         <template #operation="{ row }">
           <t-link v-if="row.status === '待派单'" theme="primary" @click="openDialog(row)">派单</t-link>
-          <t-link v-if="row.status === '已派单'" theme="success" @click="completeOrder(row)">完成</t-link>
+          <t-link v-if="row.status === '已完成'" theme="warning" @click="openReviewDialog(row)">
+            {{ row.rating ? '查看评价' : '评价' }}
+          </t-link>
           <t-link theme="danger" style="margin-left:8px" @click="handleDelete(row)">删除</t-link>
         </template>
       </t-table>
@@ -45,6 +57,31 @@
         <t-form-item label="服务描述"><t-textarea v-model="formData.description" placeholder="请输入服务描述" /></t-form-item>
       </t-form>
     </t-dialog>
+
+    <t-dialog v-model:visible="reviewDialogVisible" :header="reviewOrder.rating ? '查看评价' : '服务评价'" @confirm="handleReview" :confirm-btn="{ loading: reviewSaving }" width="500px">
+      <t-descriptions :column="1" bordered size="small" style="margin-bottom: 16px;">
+        <t-descriptions-item label="老人">{{ reviewOrder.elderName }}</t-descriptions-item>
+        <t-descriptions-item label="志愿者">{{ reviewOrder.volunteerName }}</t-descriptions-item>
+        <t-descriptions-item label="服务类型">{{ reviewOrder.serviceType }}</t-descriptions-item>
+        <t-descriptions-item label="服务时长" v-if="reviewOrder.actualDuration">
+          {{ formatDuration(reviewOrder.actualDuration) }}
+        </t-descriptions-item>
+        <t-descriptions-item label="服务时间" v-if="reviewOrder.serviceStartTime">
+          {{ reviewOrder.serviceStartTime }} ~ {{ reviewOrder.serviceEndTime }}
+        </t-descriptions-item>
+      </t-descriptions>
+      <t-form layout="vertical">
+        <t-form-item label="服务评分">
+          <t-rate v-model="reviewForm.rating" :allow-half="false" :disabled="!!reviewOrder.rating" />
+        </t-form-item>
+        <t-form-item label="评价备注">
+          <t-textarea v-model="reviewForm.comment" placeholder="请输入评价备注" :disabled="!!reviewOrder.rating" :autosize="{ minRows: 3 }" />
+        </t-form-item>
+      </t-form>
+      <template #footer v-if="reviewOrder.rating">
+        <t-button theme="primary" @click="reviewDialogVisible = false">关闭</t-button>
+      </template>
+    </t-dialog>
   </div>
 </template>
 
@@ -62,18 +99,34 @@ const saving = ref(false)
 const editingId = ref(null)
 const formData = ref({ elderId: null, volunteerId: null, serviceType: '', serviceDate: '', description: '' })
 
+const reviewDialogVisible = ref(false)
+const reviewSaving = ref(false)
+const reviewOrder = ref({})
+const reviewForm = ref({ rating: 0, comment: '' })
+
 const columns = [
   { colKey: 'id', title: 'ID', width: 60 },
   { colKey: 'elderName', title: '老人姓名', width: 100 },
   { colKey: 'volunteerName', title: '志愿者', width: 100 },
   { colKey: 'serviceType', title: '服务类型', width: 110 },
   { colKey: 'serviceDate', title: '服务日期', width: 120 },
-  { colKey: 'description', title: '服务描述' },
+  { colKey: 'duration', title: '服务时长', width: 100, cell: 'duration' },
+  { colKey: 'rating', title: '评分', width: 120, cell: 'rating' },
   { colKey: 'status', title: '状态', width: 90, cell: 'status' },
-  { colKey: 'operation', title: '操作', width: 140 }
+  { colKey: 'operation', title: '操作', width: 160 }
 ]
 
-const dispatchTheme = (s) => ({ '待派单': 'warning', '已派单': 'primary', '已完成': 'success' }[s] || 'default')
+const dispatchTheme = (s) => ({ '待派单': 'warning', '已派单': 'primary', '服务中': 'danger', '已完成': 'success' }[s] || 'default')
+
+const formatDuration = (minutes) => {
+  if (!minutes) return '0分钟'
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0) {
+    return `${hours}小时${mins}分钟`
+  }
+  return `${mins}分钟`
+}
 
 const loadList = async () => {
   loading.value = true
@@ -99,6 +152,34 @@ const openDialog = (row) => {
   dialogVisible.value = true
 }
 
+const openReviewDialog = (row) => {
+  reviewOrder.value = { ...row }
+  reviewForm.value = {
+    rating: row.rating || 0,
+    comment: row.reviewComment || ''
+  }
+  reviewDialogVisible.value = true
+}
+
+const handleReview = async () => {
+  if (!reviewForm.value.rating) {
+    MessagePlugin.warning('请选择评分')
+    return
+  }
+  reviewSaving.value = true
+  try {
+    await api.post(`/dispatches/${reviewOrder.value.id}/review`, {
+      rating: reviewForm.value.rating,
+      comment: reviewForm.value.comment
+    })
+    MessagePlugin.success('评价成功')
+    reviewDialogVisible.value = false
+    loadList()
+  } catch (e) {
+    MessagePlugin.error('评价失败')
+  } finally { reviewSaving.value = false }
+}
+
 const handleSave = async () => {
   saving.value = true
   try {
@@ -116,13 +197,6 @@ const handleSave = async () => {
   } finally { saving.value = false }
 }
 
-const completeOrder = async (row) => {
-  await api.put(`/dispatches/${row.id}`, { ...row, status: '已完成' })
-  MessagePlugin.success('已标记为完成')
-  loadList()
-  loadVolunteers()
-}
-
 const handleDelete = async (row) => {
   await api.delete(`/dispatches/${row.id}`)
   MessagePlugin.success('删除成功')
@@ -131,3 +205,13 @@ const handleDelete = async (row) => {
 
 onMounted(() => { loadList(); loadElders(); loadVolunteers() })
 </script>
+
+<style scoped>
+.duration-text {
+  color: #00a870;
+  font-weight: 500;
+}
+.text-gray {
+  color: #909399;
+}
+</style>

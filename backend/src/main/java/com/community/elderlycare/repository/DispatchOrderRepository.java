@@ -24,6 +24,13 @@ public class DispatchOrderRepository {
         d.setServiceDate(rs.getString("service_date"));
         d.setDescription(rs.getString("description"));
         d.setStatus(rs.getString("status"));
+        d.setServiceStartTime(rs.getString("service_start_time"));
+        d.setServiceEndTime(rs.getString("service_end_time"));
+        int dur = rs.getInt("actual_duration");
+        d.setActualDuration(rs.wasNull() ? null : dur);
+        int rating = rs.getInt("rating");
+        d.setRating(rs.wasNull() ? null : rating);
+        d.setReviewComment(rs.getString("review_comment"));
         String ca = rs.getString("created_at");
         if (ca != null) d.setCreatedAt(java.time.LocalDateTime.parse(ca.replace(" ", "T")));
         return d;
@@ -49,7 +56,7 @@ public class DispatchOrderRepository {
         KeyHolder kh = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO dispatch_order(elder_id,volunteer_id,service_type,service_date,description,status) VALUES(?,?,?,?,?,?)",
+                "INSERT INTO dispatch_order(elder_id,volunteer_id,service_type,service_date,description,status,service_start_time,service_end_time,actual_duration,rating,review_comment) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                 Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, d.getElderId());
             ps.setObject(2, d.getVolunteerId());
@@ -57,6 +64,11 @@ public class DispatchOrderRepository {
             ps.setString(4, d.getServiceDate());
             ps.setString(5, d.getDescription());
             ps.setString(6, d.getStatus() != null ? d.getStatus() : "待派单");
+            ps.setString(7, d.getServiceStartTime());
+            ps.setString(8, d.getServiceEndTime());
+            ps.setObject(9, d.getActualDuration());
+            ps.setObject(10, d.getRating());
+            ps.setString(11, d.getReviewComment());
             return ps;
         }, kh);
         d.setId(kh.getKey().longValue());
@@ -64,8 +76,9 @@ public class DispatchOrderRepository {
     }
 
     public void update(DispatchOrder d) {
-        jdbc.update("UPDATE dispatch_order SET elder_id=?,volunteer_id=?,service_type=?,service_date=?,description=?,status=? WHERE id=?",
-            d.getElderId(), d.getVolunteerId(), d.getServiceType(), d.getServiceDate(), d.getDescription(), d.getStatus(), d.getId());
+        jdbc.update("UPDATE dispatch_order SET elder_id=?,volunteer_id=?,service_type=?,service_date=?,description=?,status=?,service_start_time=?,service_end_time=?,actual_duration=?,rating=?,review_comment=? WHERE id=?",
+            d.getElderId(), d.getVolunteerId(), d.getServiceType(), d.getServiceDate(), d.getDescription(), d.getStatus(),
+            d.getServiceStartTime(), d.getServiceEndTime(), d.getActualDuration(), d.getRating(), d.getReviewComment(), d.getId());
     }
 
     public void deleteById(Long id) {

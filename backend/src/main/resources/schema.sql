@@ -53,6 +53,11 @@ CREATE TABLE IF NOT EXISTS dispatch_order (
     service_date TEXT NOT NULL,
     description TEXT,
     status TEXT DEFAULT '待派单',
+    service_start_time TEXT,
+    service_end_time TEXT,
+    actual_duration INTEGER DEFAULT 0,
+    rating INTEGER,
+    review_comment TEXT,
     created_at TEXT DEFAULT (datetime('now','localtime')),
     FOREIGN KEY (elder_id) REFERENCES elder(id),
     FOREIGN KEY (volunteer_id) REFERENCES volunteer(id)

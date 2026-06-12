@@ -24,11 +24,11 @@
             <t-radio value="女">女</t-radio>
           </t-radio-group>
         </t-form-item>
-        <t-form-item label="年龄"><t-input-number v-model="formData.age" :min="1" :max="150" /></t-form-item>
-        <t-form-item label="电话"><t-input v-model="formData.phone" placeholder="请输入电话" /></t-form-item>
+        <t-form-item label="年龄" name="age"><t-input-number v-model="formData.age" :min="1" :max="150" /></t-form-item>
+        <t-form-item label="电话" name="phone"><t-input v-model="formData.phone" placeholder="请输入电话" /></t-form-item>
         <t-form-item label="住址"><t-input v-model="formData.address" placeholder="请输入住址" /></t-form-item>
         <t-form-item label="紧急联系人"><t-input v-model="formData.emergencyContact" placeholder="请输入紧急联系人" /></t-form-item>
-        <t-form-item label="紧急联系电话"><t-input v-model="formData.emergencyPhone" placeholder="请输入紧急联系电话" /></t-form-item>
+        <t-form-item label="紧急联系电话" name="emergencyPhone"><t-input v-model="formData.emergencyPhone" placeholder="请输入紧急联系电话" /></t-form-item>
       </t-form>
     </t-dialog>
   </div>
@@ -47,7 +47,18 @@ const editingId = ref(null)
 const formData = ref({ name: '', gender: '男', age: 65, phone: '', address: '', emergencyContact: '', emergencyPhone: '' })
 const formRef = ref(null)
 const rules = {
-  name: [{ required: true, message: '请输入姓名', type: 'error' }]
+  name: [{ required: true, message: '请输入姓名', type: 'error' }],
+  age: [
+    { required: true, message: '请输入年龄', type: 'error' },
+    { validator: (val) => val !== null && val >= 1 && val <= 150, message: '年龄必须在1-150之间', type: 'error' }
+  ],
+  phone: [
+    { required: true, message: '请输入电话', type: 'error' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的11位手机号', type: 'error' }
+  ],
+  emergencyPhone: [
+    { validator: (val) => !val || /^1[3-9]\d{9}$/.test(val), message: '请输入正确的11位紧急联系电话', type: 'error' }
+  ]
 }
 
 const columns = [

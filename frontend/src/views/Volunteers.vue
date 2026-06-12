@@ -26,9 +26,9 @@
     </t-card>
 
     <t-dialog v-model:visible="dialogVisible" :header="editingId ? '编辑志愿者' : '新增志愿者'" @confirm="handleSave" :confirm-btn="{ loading: saving }" width="450px">
-      <t-form :data="formData" layout="vertical">
-        <t-form-item label="姓名"><t-input v-model="formData.name" placeholder="请输入姓名" /></t-form-item>
-        <t-form-item label="电话"><t-input v-model="formData.phone" placeholder="请输入电话" /></t-form-item>
+      <t-form :data="formData" :rules="rules" ref="formRef" layout="vertical">
+        <t-form-item label="姓名" name="name"><t-input v-model="formData.name" placeholder="请输入姓名" /></t-form-item>
+        <t-form-item label="电话" name="phone"><t-input v-model="formData.phone" placeholder="请输入电话" /></t-form-item>
         <t-form-item label="特长">
           <t-select v-model="formData.skill" placeholder="请选择特长" clearable>
             <t-option value="陪聊" label="陪聊" />
@@ -76,6 +76,14 @@ const dialogVisible = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
 const formData = ref({ name: '', phone: '', skill: '', status: '空闲' })
+const formRef = ref(null)
+const rules = {
+  name: [{ required: true, message: '请输入姓名', type: 'error' }],
+  phone: [
+    { required: true, message: '请输入电话', type: 'error' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的11位手机号', type: 'error' }
+  ]
+}
 
 const accountDialogVisible = ref(false)
 const accountSaving = ref(false)
@@ -118,6 +126,8 @@ const openDialog = (row) => {
 }
 
 const handleSave = async () => {
+  const validateResult = await formRef.value.validate()
+  if (validateResult !== true) return
   saving.value = true
   try {
     if (editingId.value) {

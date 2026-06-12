@@ -17,6 +17,7 @@ D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycar
 D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\config\SqliteConfig.java
 D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\config\DatabaseInitializer.java
 D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\controller\HealthRecordController.java
+D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\config\GlobalExceptionHandler.java
 D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\model\DispatchOrder.java
 D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\model\MealReservation.java
 D:\data\projects\bz-6\repos\rk-95\backend\src\main\java\com\community\elderlycare\repository\DispatchOrderRepository.java

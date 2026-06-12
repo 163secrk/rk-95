@@ -16,14 +16,16 @@
     </t-card>
 
     <t-dialog v-model:visible="dialogVisible" :header="editingId ? '编辑健康记录' : '新增健康登记'" @confirm="handleSave" :confirm-btn="{ loading: saving }" width="500px">
-      <t-form :data="formData" layout="vertical">
-        <t-form-item label="老人">
+      <t-form :data="formData" :rules="rules" ref="formRef" layout="vertical">
+        <t-form-item label="老人" name="elderId">
           <t-select v-model="formData.elderId" placeholder="请选择老人" filterable>
             <t-option v-for="e in elders" :key="e.id" :value="e.id" :label="e.name" />
           </t-select>
         </t-form-item>
-        <t-form-item label="登记日期"><t-date-picker v-model="formData.recordDate" clearable style="width:100%" /></t-form-item>
-        <t-form-item label="血压"><t-input v-model="formData.bloodPressure" placeholder="如 120/80 mmHg" /></t-form-item>
+        <t-form-item label="登记日期" name="recordDate">
+          <t-date-picker v-model="formData.recordDate" clearable style="width:100%" :disable-date="disablePastDate" />
+        </t-form-item>
+        <t-form-item label="血压" name="bloodPressure"><t-input v-model="formData.bloodPressure" placeholder="如 120/80 mmHg" /></t-form-item>
         <t-form-item label="心率(次/分)"><t-input-number v-model="formData.heartRate" :min="30" :max="220" /></t-form-item>
         <t-form-item label="血糖"><t-input v-model="formData.bloodSugar" placeholder="如 5.6 mmol/L" /></t-form-item>
         <t-form-item label="体温"><t-input v-model="formData.temperature" placeholder="如 36.5 ℃" /></t-form-item>
@@ -46,6 +48,41 @@ const dialogVisible = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
 const formData = ref({ elderId: null, recordDate: '', bloodPressure: '', heartRate: null, bloodSugar: '', temperature: '', medication: '', notes: '' })
+const formRef = ref(null)
+
+const validateBloodPressure = (val) => {
+  if (!val) return true
+  const match = val.match(/(-?\d+)\s*\/\s*(-?\d+)/)
+  if (match) {
+    const systolic = parseInt(match[1])
+    const diastolic = parseInt(match[2])
+    return systolic >= 0 && diastolic >= 0
+  }
+  return true
+}
+
+const rules = {
+  elderId: [{ required: true, message: '请选择老人', type: 'error' }],
+  recordDate: [
+    { required: true, message: '请选择登记日期', type: 'error' },
+    { validator: (val) => {
+      if (!val) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selected = new Date(val);
+      return selected >= today;
+    }, message: '登记日期不能是过去的日期', type: 'error' }
+  ],
+  bloodPressure: [
+    { validator: validateBloodPressure, message: '血压不能为负数', type: 'error' }
+  ]
+}
+
+const disablePastDate = ({ date }) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+}
 
 const columns = [
   { colKey: 'id', title: 'ID', width: 60 },
@@ -80,6 +117,8 @@ const openDialog = (row) => {
 }
 
 const handleSave = async () => {
+  const validateResult = await formRef.value.validate()
+  if (validateResult !== true) return
   saving.value = true
   try {
     if (editingId.value) {

@@ -28,7 +28,9 @@
             <t-option v-for="e in elders" :key="e.id" :value="e.id" :label="e.name" />
           </t-select>
         </t-form-item>
-        <t-form-item label="用餐日期"><t-date-picker v-model="formData.mealDate" clearable style="width:100%" /></t-form-item>
+        <t-form-item label="用餐日期" name="mealDate">
+          <t-date-picker v-model="formData.mealDate" clearable style="width:100%" :disable-date="disablePastDate" />
+        </t-form-item>
         <t-form-item label="餐次">
           <t-select v-model="formData.mealType" placeholder="请选择餐次">
             <t-option value="早餐" label="早餐" />
@@ -65,7 +67,23 @@ const formData = ref({ elderId: null, mealDate: '', mealType: '午餐', menuItem
 const formRef = ref(null)
 const rules = {
   elderId: [{ required: true, message: '请选择老人', type: 'error' }],
+  mealDate: [
+    { required: true, message: '请选择用餐日期', type: 'error' },
+    { validator: (val) => {
+      if (!val) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selected = new Date(val);
+      return selected >= today;
+    }, message: '用餐日期不能是过去的日期', type: 'error' }
+  ],
   menuItem: [{ required: true, message: '请输入菜品', type: 'error' }]
+}
+
+const disablePastDate = ({ date }) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
 }
 
 const columns = [

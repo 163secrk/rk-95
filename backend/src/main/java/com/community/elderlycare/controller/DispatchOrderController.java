@@ -46,9 +46,12 @@ public class DispatchOrderController {
             volunteerRepo.update(v);
         }
         if ("已完成".equals(d.getStatus()) && d.getVolunteerId() != null) {
-            var v = volunteerRepo.findById(d.getVolunteerId());
-            v.setStatus("空闲");
-            volunteerRepo.update(v);
+            long activeCount = repo.countActiveByVolunteerId(d.getVolunteerId(), id);
+            if (activeCount == 0) {
+                var v = volunteerRepo.findById(d.getVolunteerId());
+                v.setStatus("空闲");
+                volunteerRepo.update(v);
+            }
         }
     }
 
@@ -87,9 +90,12 @@ public class DispatchOrderController {
         order.setStatus("已完成");
         repo.update(order);
         if (order.getVolunteerId() != null) {
-            var v = volunteerRepo.findById(order.getVolunteerId());
-            v.setStatus("空闲");
-            volunteerRepo.update(v);
+            long activeCount = repo.countActiveByVolunteerId(order.getVolunteerId(), id);
+            if (activeCount == 0) {
+                var v = volunteerRepo.findById(order.getVolunteerId());
+                v.setStatus("空闲");
+                volunteerRepo.update(v);
+            }
         }
         return repo.findById(id);
     }

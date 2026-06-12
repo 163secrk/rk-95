@@ -104,4 +104,12 @@ public class DispatchOrderRepository {
             "WHERE d.volunteer_id=? AND d.status=? ORDER BY d.id DESC",
             (rs, i) -> { DispatchOrder d = mapper.mapRow(rs, i); d.setElderName(rs.getString("elder_name")); d.setVolunteerName(rs.getString("volunteer_name")); return d; }, volunteerId, status);
     }
+
+    public long countActiveByVolunteerId(Long volunteerId, Long excludeOrderId) {
+        String sql = "SELECT COUNT(*) FROM dispatch_order WHERE volunteer_id=? AND status IN ('已派单','服务中')";
+        if (excludeOrderId != null) {
+            sql += " AND id != " + excludeOrderId;
+        }
+        return jdbc.queryForObject(sql, Long.class, volunteerId);
+    }
 }

@@ -22,8 +22,8 @@
     </t-card>
 
     <t-dialog v-model:visible="dialogVisible" :header="editingId ? '编辑预约' : '新增预约'" @confirm="handleSave" :confirm-btn="{ loading: saving }" width="500px">
-      <t-form :data="formData" layout="vertical">
-        <t-form-item label="老人">
+      <t-form :data="formData" :rules="rules" ref="formRef" layout="vertical">
+        <t-form-item label="老人" name="elderId">
           <t-select v-model="formData.elderId" placeholder="请选择老人" filterable>
             <t-option v-for="e in elders" :key="e.id" :value="e.id" :label="e.name" />
           </t-select>
@@ -36,7 +36,7 @@
             <t-option value="晚餐" label="晚餐" />
           </t-select>
         </t-form-item>
-        <t-form-item label="菜品"><t-input v-model="formData.menuItem" placeholder="请输入菜品" /></t-form-item>
+        <t-form-item label="菜品" name="menuItem"><t-input v-model="formData.menuItem" placeholder="请输入菜品" /></t-form-item>
         <t-form-item label="状态">
           <t-select v-model="formData.status" placeholder="请选择状态">
             <t-option value="已预约" label="已预约" />
@@ -62,6 +62,11 @@ const dialogVisible = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
 const formData = ref({ elderId: null, mealDate: '', mealType: '午餐', menuItem: '', status: '已预约', remark: '' })
+const formRef = ref(null)
+const rules = {
+  elderId: [{ required: true, message: '请选择老人', type: 'error' }],
+  menuItem: [{ required: true, message: '请输入菜品', type: 'error' }]
+}
 
 const columns = [
   { colKey: 'id', title: 'ID', width: 60 },
@@ -97,6 +102,8 @@ const openDialog = (row) => {
 }
 
 const handleSave = async () => {
+  const validateResult = await formRef.value.validate()
+  if (validateResult !== true) return
   saving.value = true
   try {
     if (editingId.value) {

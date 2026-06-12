@@ -16,8 +16,8 @@
     </t-card>
 
     <t-dialog v-model:visible="dialogVisible" :header="editingId ? '编辑老人' : '新增老人'" @confirm="handleSave" :confirm-btn="{ loading: saving }">
-      <t-form :data="formData" layout="vertical">
-        <t-form-item label="姓名"><t-input v-model="formData.name" placeholder="请输入姓名" /></t-form-item>
+      <t-form :data="formData" :rules="rules" ref="formRef" layout="vertical">
+        <t-form-item label="姓名" name="name"><t-input v-model="formData.name" placeholder="请输入姓名" /></t-form-item>
         <t-form-item label="性别">
           <t-radio-group v-model="formData.gender">
             <t-radio value="男">男</t-radio>
@@ -45,6 +45,10 @@ const dialogVisible = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
 const formData = ref({ name: '', gender: '男', age: 65, phone: '', address: '', emergencyContact: '', emergencyPhone: '' })
+const formRef = ref(null)
+const rules = {
+  name: [{ required: true, message: '请输入姓名', type: 'error' }]
+}
 
 const columns = [
   { colKey: 'id', title: 'ID', width: 60 },
@@ -75,6 +79,8 @@ const openDialog = (row) => {
 }
 
 const handleSave = async () => {
+  const validateResult = await formRef.value.validate()
+  if (validateResult !== true) return
   saving.value = true
   try {
     if (editingId.value) {

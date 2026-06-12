@@ -49,8 +49,8 @@ const rules = {
 }
 
 const handleLogin = async () => {
-  const { valid } = await formRef.value.validate()
-  if (!valid) return
+  const validateResult = await formRef.value.validate()
+  if (validateResult !== true) return
 
   loading.value = true
   try {
